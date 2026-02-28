@@ -65,29 +65,25 @@ Transfer Learning means reusing knowledge encoded in a model trained on a large
 dataset and redirecting it to a smaller, specialized domain — without starting
 from scratch.
 
-```
-STEP 1 — Pre-training (done by the timm/EfficientNet authors)
-──────────────────────────────────────────────────────────────
-ImageNet: 14,000,000 images across 1,000 categories
-                    |
-           EfficientNet-B0 trains for weeks
-                    |
-     Model encodes universal visual knowledge:
-     - Early layers:  edges, corners, gradients
-     - Middle layers: textures, patterns, shapes
-     - Top layers:    complex structures, object parts
-
-STEP 2 — Transfer (this project)
-──────────────────────────────────────────────────────────────
-HAM10000: 10,015 dermoscopic images across 7 skin categories
-                    |
-    We load EfficientNet's pretrained weights via timm
-                    |
-    We FREEZE the backbone  -->  train only the new head
-                    |
-    We UNFREEZE top layers  -->  fine-tune for dermatology
-                    |
-    Model learns: mel vs nv, bcc vs akiec, risk levels
+```mermaid
+graph TD
+    subgraph S1 ["STEP 1 — Pre-training (by timm/EfficientNet authors)"]
+        A["ImageNet:<br/>14,000,000 images<br/>1,000 categories"] --> B["EfficientNet-B0<br/>trains for weeks"]
+        B --> C["Model encodes universal visual knowledge:<br/>• Early layers: edges, corners, gradients<br/>• Middle layers: textures, patterns, shapes<br/>• Top layers: complex structures, object parts"]
+    end
+    
+    subgraph S2 ["STEP 2 — Transfer (this project)"]
+        D["HAM10000:<br/>10,015 dermoscopic images<br/>7 skin categories"] --> E["Load EfficientNet's pretrained weights via timm"]
+        C -.-> E
+        E --> F["FREEZE the backbone<br/>Train only the new head"]
+        F --> G["UNFREEZE top layers<br/>Fine-tune for dermatology"]
+        G --> H["Model learns:<br/>mel vs nv, bcc vs akiec, risk levels"]
+    end
+    
+    style S1 fill:#f5f5f5,stroke:#9e9e9e,stroke-width:2px,stroke-dasharray: 5 5
+    style S2 fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
+    style C fill:#e8f5e9,stroke:#388e3c,stroke-width:2px
+    style H fill:#e8f5e9,stroke:#388e3c,stroke-width:2px
 ```
 
 ### Why ImageNet Features Transfer Directly to Skin Lesions
@@ -105,15 +101,19 @@ what EfficientNet already mastered on ImageNet:
 
 ### Why Training From Scratch Would Fail
 
-```
-From scratch on HAM10000:
-  10,015 images  -->  far too few to learn visual features from zero
-  Result:             catastrophic overfitting, ~random performance
-
-Transfer Learning on HAM10000:
-  Backbone already "knows how to see"
-  10,015 images  -->  enough to redirect that knowledge
-  Result:             AUC 0.907 on completely unseen test data
+```mermaid
+graph LR
+    subgraph FS ["From Scratch on HAM10000"]
+        F1["10,015 images"] -->|"far too few to learn<br/>visual features from zero"| F2("Catastrophic overfitting<br/>~random performance")
+    end
+    
+    subgraph TL ["Transfer Learning on HAM10000"]
+        T1["Backbone already<br/>'knows how to see'"] --> T2["10,015 images"]
+        T2 -->|"enough to redirect<br/>that knowledge"| T3("AUC 0.907 on<br/>completely unseen test data")
+    end
+    
+    style F2 fill:#ffebee,stroke:#c62828,stroke-width:2px
+    style T3 fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
 ```
 
 The evidence is in the code — `model.py` line 12:
@@ -127,44 +127,29 @@ This single line is the Transfer Learning mechanism.
 
 ## 3. Model Architecture
 
-```
-Input Image  (224 x 224 x 3)
-       |
-       v
-+------------------------------------------+
-|      EfficientNet-B0 Backbone            |
-|      pretrained=True (ImageNet)          |
-|      5.3M parameters                     |
-|                                          |
-|  Stacked MBConv blocks:                  |
-|  - Depthwise separable convolutions      |
-|  - Squeeze-and-Excitation attention      |
-|  - Compound depth/width/resolution scale |
-|                                          |
-|  Output: 1280-dimensional feature vector |
-+------------------------------------------+
-       |   Phase 1: FROZEN
-       |   Phase 2: top 3 blocks UNFROZEN
-       v
-  Global Average Pooling  -->  (B, 1280)
-       |
-       v
-  Linear(1280 -> 512) + ReLU + Dropout(0.4)
-       |
-       v
-  Linear(512 -> 128) + ReLU + Dropout(0.2)
-       |
-       v
-  Linear(128 -> 7)   -->  Softmax
-       |
-       v
-+----------------------------------------------+
-|  predicted_class  |  "mel"                   |
-|  confidence       |  0.87                    |
-|  risk_level       |  HIGH                    |
-|  recommendation   |  "Consult dermatologist" |
-|  all_probabilities|  {nv:0.05, mel:0.87, ...}|
-+----------------------------------------------+
+```mermaid
+graph TD
+    A(["Input Image<br/>(224 x 224 x 3)"]) --> B_BACKBONE
+    
+    subgraph B_BACKBONE ["EfficientNet-B0 Backbone"]
+        direction TB
+        B1["pretrained=True (ImageNet)<br/>5.3M parameters"]
+        B2["Stacked MBConv blocks:<br/>• Depthwise separable convolutions<br/>• Squeeze-and-Excitation attention<br/>• Compound depth/width/resolution scale"]
+        B1 --- B2
+        B3["Output: 1280-dimensional feature vector"]
+        B2 --- B3
+    end
+    
+    B_BACKBONE -->|"Phase 1: FROZEN<br/>Phase 2: top 3 blocks UNFROZEN"| C("Global Average Pooling<br/>(B, 1280)")
+    
+    C --> D["Linear(1280 → 512)<br/>ReLU + Dropout(0.4)"]
+    D --> E["Linear(512 → 128)<br/>ReLU + Dropout(0.2)"]
+    E --> F["Linear(128 → 7)<br/>Softmax"]
+    
+    F --> G[/"predicted_class: 'mel'<br/>confidence: 0.87<br/>risk_level: HIGH<br/>recommendation: 'Consult dermatologist'<br/>all_probabilities: {nv:0.05, mel:0.87, ...}"/]
+    
+    style B_BACKBONE fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,stroke-dasharray: 5 5
+    style G fill:#fff3e0,stroke:#e65100,stroke-width:2px
 ```
 
 | Component | Specification | Rationale |
