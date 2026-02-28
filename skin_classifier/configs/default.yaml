@@ -1,0 +1,30 @@
+# Model Architecture
+backbone: "efficientnet_b0"
+pretrained: true
+image_size: 224
+image_mean: [0.485, 0.456, 0.406]
+image_std: [0.229, 0.224, 0.225]
+dropout_1: 0.4
+dropout_2: 0.2
+
+# Training Hyperparameters
+epochs_frozen: 10
+epochs_finetune: 20
+lr_head: 1.0e-3
+lr_backbone: 1.0e-4
+batch_size: 32
+weight_decay: 1.0e-4
+optimizer: "AdamW"
+early_stopping_patience: 7
+early_stopping_metric: "val_AUC"
+
+# Paths and Data Settings
+checkpoint_dir: "./models"
+save_best_only: true
+data_root: "./data/ham10000"
+data_csv: "HAM10000_metadata.csv"
+
+# Dataset Splitting
+val_split: 0.15
+test_split: 0.15
+num_workers: 0
