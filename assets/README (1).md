@@ -187,7 +187,7 @@ Input Image  (224 x 224 x 3)
 dermoscopy dataset from the International Skin Imaging Collaboration (ISIC),
 comprising 10,015 labeled images from two Vienna clinics.
 
-![Class Distribution](/assets/class_distribution.png)
+![Class Distribution](assets/class_distribution.png)
 
 ### Data Split Strategy
 
@@ -249,7 +249,7 @@ classes like `mel`, `akiec`, and `df`.
 The backbone was not trained end-to-end from epoch 1. Training proceeded in
 two distinct phases, each with a clear rationale:
 
-![Training Curves](/assets/training_curves.png)
+![Training Curves](assets/training_curves.png)
 
 **Phase 1 — Frozen Backbone (epochs 1–10)**
 
@@ -337,7 +337,7 @@ Macro AUC: 0.9071
 Macro F1:  0.5503
 ```
 
-![Per-Class F1](/assets/per_class_f1.png)
+![Per-Class F1](assets/per_class_f1.png)
 
 ### Per-Class Performance Analysis
 
@@ -351,11 +351,11 @@ Macro F1:  0.5503
 | akiec | Actinic Keratosis | 0.444 | 327 | HIGH | Visually overlaps with mel |
 | mel | Melanoma | **0.366** | 1,113 | HIGH | Most critical — hardest to distinguish |
 
-![Radar Chart](/assets/radar_chart.png)
+![Radar Chart](assets/radar_chart.png)
 
 ### Confusion Matrix
 
-![Confusion Matrix](/assets/confusion_matrix.png)
+![Confusion Matrix](assets/confusion_matrix.png)
 
 The confusion matrix reveals the dominant failure mode: **mel is frequently
 misclassified as nv** (the two most visually similar categories in dermatoscopy).
@@ -367,7 +367,7 @@ literature — even experienced dermatologists show disagreement on ambiguous ca
 The most important result is not any single metric — it is the **stability
 between Val and Test**:
 
-![Val vs Test](/assets/val_vs_test.png)
+![Val vs Test](assets/val_vs_test.png)
 
 | Metric | Val | Test | Delta |
 |---|---|---|---|
@@ -397,7 +397,7 @@ per class on a fine-grained medical imaging task.
 
 ## 7. Prediction Examples
 
-![Prediction Examples](/assets/prediction_examples.png)
+![Prediction Examples](assets/prediction_examples.png)
 
 ### Example 1 — Correct HIGH Risk Detection
 
