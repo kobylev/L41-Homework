@@ -40,17 +40,15 @@ five-year survival rate**, falling to **14%** when detected at Stage IV.
 
 The clinical bottleneck:
 
-```
-Person notices a suspicious skin mark
-              |
-              v
-Doesn't know if it's dangerous
-              |
-              v
-Dermatologist visit = weeks of waiting + high cost
-              |
-              v
-They delay  -->  lesion progresses
+```mermaid
+graph TD
+    A[Person notices a suspicious skin mark] --> B["Doesn't know if it's dangerous"]
+    B --> C["Dermatologist visit:<br/>Weeks of waiting + High cost"]
+    C --> D[Patient delays seeking help]
+    D --> E["Lesion progresses<br/>Outcomes worsen"]
+    
+    style A fill:#e1f5fe,stroke:#0288d1,stroke-width:2px
+    style E fill:#ffebee,stroke:#d32f2f,stroke-width:2px
 ```
 
 **This project addresses triage**, not diagnosis. By classifying a dermoscopic
