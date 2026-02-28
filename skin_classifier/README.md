@@ -23,12 +23,13 @@
 6. [Evaluation & Results](#6-evaluation--results)
 7. [Prediction Examples](#7-prediction-examples)
 8. [Comparison to Known Benchmarks](#8-comparison-to-known-benchmarks)
-9. [Future Research Directions](#9-future-research-directions)
-10. [Setup & Installation](#10-setup--installation)
-11. [Docker](#11-docker)
-12. [API Reference](#12-api-reference)
-13. [Project Structure](#13-project-structure)
-14. [Configuration Reference](#14-configuration-reference)
+9. [Conclusions](#9-conclusions)
+10. [Future Research Directions](#10-future-research-directions)
+11. [Setup & Installation](#11-setup--installation)
+12. [Docker](#12-docker)
+13. [API Reference](#13-api-reference)
+14. [Project Structure](#14-project-structure)
+15. [Configuration Reference](#15-configuration-reference)
 
 ---
 
@@ -460,7 +461,22 @@ published literature without any ensemble or test-time augmentation.
 
 ---
 
-## 9. Future Research Directions
+## 9. Conclusions
+
+This project successfully demonstrated the viability of **Transfer Learning** for addressing complex medical imaging tasks under severe data limitations. By leveraging the universal visual representations learned by EfficientNet-B0 on ImageNet, we achieved an **AUC of 0.907** on a completely unseen test set of 1,490 dermoscopic images.
+
+**Key achievements and architectural decisions:**
+1. **Model Efficiency:** We proved that a lightweight backbone (EfficientNet-B0, 5.3M parameters) can achieve results competitive with much heavier architectures. The model is highly efficient and capable of running inference on low-cost CPU hardware or Edge devices.
+2. **Robust Data Handling:** To prevent data leakage, we implemented a rigorous `lesion_id`-level data split strategy. Without this, the validation metrics would have been artificially inflated by the model memorizing specific patients from the training set.
+3. **Imbalance Mitigation:** We successfully engineered a dual-layer approach (Weighted Random Sampling + Weighted Loss) to force the neural network to learn the rare but clinically critical minority classes (such as `df`, `vasc`, and `akiec`), preventing the model from lazily predicting the majority `nv` class.
+4. **Resilience to Domain Shift:** Through external testing on out-of-distribution clinical images from DermNet NZ, we observed the expected drop in standard categorical accuracy due to lighting/hardware variations, but vitally, the **clinical risk triage system remained robust**. The model successfully flagged unseen melanomas as HIGH risk, proving that the network learned the fundamental morphological traits of malignancy rather than just memorizing the color profile of the HAM10000 camera.
+
+**The Medical Reality:** 
+Dermatological AI cannot currently operate as an autonomous diagnostician. The persistent confusion between Melanoma (`mel`) and Benign Nevi (`nv`) highlights the limitations of purely visual AI without patient metadata (age, location, lesion evolution rate). However, the model functions exceptionally well as a **safety net and triage tool**. A well-calibrated system that flags high-risk lesions and explicitly communicates uncertainty (via probabilistic confidence scoring) can dramatically reduce the time-to-treatment for potentially fatal skin cancers.
+
+---
+
+## 10. Future Research Directions
 
 ### Direction 1 — Explainability via Grad-CAM (highest priority)
 
@@ -550,7 +566,7 @@ changing one line in `configs/default.yaml` is sufficient to experiment.
 
 ---
 
-## 10. Setup & Installation
+## 11. Setup & Installation
 
 ### Prerequisites
 
@@ -601,7 +617,7 @@ python scripts/smoke_test.py
 
 ---
 
-## 11. Docker
+## 12. Docker
 
 ### Build & Run
 
@@ -631,7 +647,7 @@ copied to the runtime image, minimizing final image size.
 
 ---
 
-## 12. API Reference
+## 13. API Reference
 
 ### `GET /health`
 
@@ -674,7 +690,7 @@ curl -X POST http://localhost:5000/predict \
 
 ---
 
-## 13. Project Structure
+## 14. Project Structure
 
 ```
 skin_classifier/
@@ -712,7 +728,7 @@ skin_classifier/
 
 ---
 
-## 14. Configuration Reference
+## 15. Configuration Reference
 
 All hyperparameters live in `configs/default.yaml`. Nothing is hardcoded.
 
